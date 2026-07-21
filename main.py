@@ -10,7 +10,7 @@ from core.logger import logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("==========================================================")
-    logger.info("  ¡API Modular Inicializada en Raíz con Éxito (Lifespan)!")
+    logger.info("  API Modular Inicializada en Raíz con Éxito (Lifespan)!")
     logger.info("  Documentación interactiva: http://127.0.0.1:8000/docs")
     logger.info("==========================================================")
     yield
@@ -19,8 +19,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="API FastAPI Modular sin SRC - SQL Puro",
-    version="3.1.0",
-    description="Estructura limpia basada en dominios directo en raíz sin Passlib",
+    version="3.2.0",
+    description="Estructura limpia basada en dominios directo en raíz - Ciberseguridad (RNF-01, RNF-02)",
     lifespan=lifespan
 )
 

@@ -1,5 +1,7 @@
 import bcrypt
 import jwt
+import secrets
+import hashlib
 from datetime import datetime, timedelta, timezone
 from core.config import settings
 from fastapi import Depends, HTTPException, status
@@ -26,8 +28,24 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def create_refresh_token() -> tuple[str, str]:
+    raw = secrets.token_urlsafe(48)
+    token_hash = hashlib.sha256(raw.encode()).hexdigest()
+    return raw, token_hash
+
+
+def create_reset_token() -> tuple[str, str]:
+    raw = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw.encode()).hexdigest()
+    return raw, token_hash
+
+
+def decode_access_token(token: str) -> dict:
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
 
 async def get_current_user(
@@ -41,10 +59,11 @@ async def get_current_user(
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = decode_access_token(token)
+        if payload.get("type") != "access":
+            raise credentials_exception
         username: str = payload.get("sub")
         user_id: int = payload.get("user_id")
-
         if username is None or user_id is None:
             raise credentials_exception
     except jwt.PyJWTError:

@@ -12,7 +12,7 @@ class UserService:
 
     async def get_all_users(self) -> list[dict]:
         logger.info("SQL Nativo: Consultando todos los usuarios.")
-        query = text("SELECT id, username, email, is_active, role_id FROM users ORDER BY id ASC;")
+        query = text("SELECT id, username, email, is_active, role_id, validated_email FROM users ORDER BY id ASC;")
         result = await self.db.execute(query)
         return [dict(row) for row in result.mappings().all()]
 
@@ -33,7 +33,7 @@ class UserService:
         # Uso de la función bcrypt nativa
         hashed_pwd = hash_password(user_data.password)
         
-        query = text("INSERT INTO users (username, email, hashed_password, is_active, role_id) VALUES (:username, :email, :hashed_password, TRUE, :role_id) RETURNING id, username, email, is_active, role_id;")
+        query = text("INSERT INTO users (username, email, hashed_password, is_active, role_id) VALUES (:username, :email, :hashed_password, TRUE, :role_id) RETURNING id, username, email, is_active, role_id, validated_email;")
         try:
             result = await self.db.execute(query, {
                 "username": user_data.username,
@@ -104,7 +104,7 @@ class UserService:
             UPDATE users
             SET {', '.join(update_fields)}
             WHERE id = :id
-            RETURNING id, username, email, is_active, role_id;
+            RETURNING id, username, email, is_active, role_id, validated_email;
         """
 
         try:
